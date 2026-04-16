@@ -1,47 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Photobooth</title>
+  <title>Tasya Photobooth 💕</title>
 
   <style>
     body {
-      text-align: center;
       font-family: Arial;
-      background: #05eeb7;
+      background: #ffe4ec;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ff1493;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .main {
+      text-align: center;
+      margin: 0 20px;
+    }
+
+    .side {
+      width: 160px;
+      text-align: center;
+    }
+
+    /* Tombol jumlah foto */
+    .select-btn {
+      padding: 10px 18px;
+      margin: 5px;
+      background: #ff7ab8;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .select-btn:hover {
+      background: #ff4fa3;
+      transform: scale(1.05);
+    }
+
+    .select-btn.active {
+      background: #d40072;
+      transform: scale(1.12);
+      box-shadow: 0 0 12px #ff1493;
+    }
+
+    /* Template preview */
+    .previewCanvas {
+      width: 140px;
+      height: 240px;
+      margin: 10px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 2px solid #ff1493;
+      background: white;
+      transition: 0.2s ease;
+    }
+
+    .previewCanvas:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #ff8acb;
+    }
+
+    .previewCanvas.active {
+      transform: scale(1.12);
+      border: 3px solid #d40072;
+      box-shadow: 0 0 15px #ff1493;
     }
 
     video {
+      width: 300px;
+      border-radius: 15px;
       transform: scaleX(-1);
     }
 
-    video, canvas {
-      border-radius: 10px;
-      margin: 10px;
-    }
-
-    canvas {
-      border-radius: 15px;
-      margin-bottom: 30px;
-    }
-
     #countdown {
-      font-size: 50px;
+      font-size: 40px;
       color: #ff1493;
-      margin: 10px;
+    }
+
+    canvas#canvas {
+      margin-top: 20px;
+      border-radius: 15px;
     }
 
     button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      background: black;
+      padding: 8px 15px;
+      margin: 5px;
+      background: #ff1493;
       color: white;
-      border-radius: 5px;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: gray;
     }
 
     #download {
@@ -50,99 +111,208 @@
       padding: 10px 20px;
       background: green;
       color: white;
+      border-radius: 10px;
       text-decoration: none;
-      border-radius: 5px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Photobooth dwi & tasya 💕</h1>
+<h1>Tasya Photobooth 💕</h1>
 
-  <!-- 🔽 COUNTDOWN -->
-  <h2 id="countdown"></h2>
+<div class="container">
 
-  <video id="video" width="300" autoplay></video><br><br>
+  <!-- KIRI -->
+  <div class="side">
+    <p>Pilih Jumlah Foto:</p>
 
-  <button onclick="takePhoto()">Ambil Foto</button>
+    <button class="select-btn" id="btn2" onclick="setPhotoCount(2)">2 Foto</button>
+    <button class="select-btn" id="btn3" onclick="setPhotoCount(3)">3 Foto</button>
+    <button class="select-btn" id="btn4" onclick="setPhotoCount(4)">4 Foto</button>
+  </div>
 
-  <br><br>
-  <canvas id="canvas" width="300" height="1360"></canvas>
+  <!-- TENGAH -->
+  <div class="main">
+    <video id="video" autoplay></video>
 
-  <br>
-  <a id="download" href="#">Download foto</a>
+    <h2 id="countdown"></h2>
 
-  <script>
-    const video = document.getElementById('video');
+    <button onclick="takePhoto()">Ambil Foto</button>
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        alert("Kamera tidak bisa diakses!");
-      });
+    <br><br>
+    <canvas id="canvas" width="300"></canvas>
 
-    function takePhoto() {
-      let photoCount = 0;
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
-      const display = document.getElementById('countdown');
+    <br>
+    <a id="download" href="#">Download foto</a>
+  </div>
 
-      const spacing = 20;
-      const padding = 20;
+  <!-- KANAN -->
+  <div class="side">
+    <p>Template</p>
+    <canvas class="previewCanvas" id="preview1" onclick="selectTemplate(1, 'frame1.png')"></canvas>
+    <canvas class="previewCanvas" id="preview2" onclick="selectTemplate(2, 'frame2.png')"></canvas>
+    <canvas class="previewCanvas" id="preview3" onclick="selectTemplate(3, 'frame3.png')"></canvas>
+  </div>
 
-      // background pink
-      ctx.fillStyle = "#ffc0cb";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+</div>
 
-      function startCountdown() {
-        let count = 3;
+<script>
+/* Kamera */
+const video = document.getElementById('video');
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => video.srcObject = stream);
+
+/* Frame */
+let frameImg = new Image();
+frameImg.src = "frame1.png";
+
+/* Jumlah foto */
+let totalPhotos = 4;
+
+/* Highlight tombol jumlah foto */
+function highlightButton(n) {
+  document.getElementById("btn2").classList.remove("active");
+  document.getElementById("btn3").classList.remove("active");
+  document.getElementById("btn4").classList.remove("active");
+
+  document.getElementById("btn" + n).classList.add("active");
+}
+
+function setPhotoCount(n) {
+  totalPhotos = n;
+  highlightButton(n);
+  loadAllPreviews();
+}
+
+/* Highlight template */
+function selectTemplate(id, src) {
+  frameImg.src = src;
+
+  document.getElementById("preview1").classList.remove("active");
+  document.getElementById("preview2").classList.remove("active");
+  document.getElementById("preview3").classList.remove("active");
+
+  document.getElementById("preview" + id).classList.add("active");
+}
+
+/* Ambil foto */
+function takePhoto() {
+  let photoCount = 0;
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const display = document.getElementById('countdown');
+
+  const spacing = 20;
+  const padding = 20;
+  const size = 260;
+
+  canvas.height = totalPhotos * (size + spacing) + 120;
+
+  ctx.fillStyle = "#ffc0cb";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  function startCountdown() {
+    let count = 3;
+    display.innerText = count;
+
+    const timer = setInterval(() => {
+      count--;
+
+      if (count > 0) {
         display.innerText = count;
+      } else if (count === 0) {
+        display.innerText = "📸";
+      } else {
+        clearInterval(timer);
+        display.innerText = "";
 
-        const timer = setInterval(() => {
-          count--;
+        const y = photoCount * (size + spacing);
 
-          if (count > 0) {
-            display.innerText = count;
-          } else if (count === 0) {
-            display.innerText = "📸";
-          } else {
-            clearInterval(timer);
-            display.innerText = "";
+        ctx.fillStyle = "white";
+        ctx.fillRect(padding, y + padding, size, size);
 
-            // ambil foto setelah countdown
-            const y = photoCount * (300 + spacing);
+        ctx.drawImage(video, padding, y + padding, size, size);
 
-            ctx.fillStyle = "white";
-            ctx.fillRect(padding, y + padding, 260, 260);
+        ctx.drawImage(frameImg, padding, y + padding, size, size);
 
-            ctx.drawImage(video, padding, y + padding, 260, 260);
+        photoCount++;
 
-            photoCount++;
+        if (photoCount < totalPhotos) {
+          setTimeout(startCountdown, 800);
+        } else {
+          const bottomY = totalPhotos * (size + spacing) + 40;
 
-            if (photoCount < 4) {
-              setTimeout(startCountdown, 800); // jeda antar foto
-            } else {
-              display.innerText = "Selesai!";
-            }
-          }
-        }, 1000);
+          ctx.strokeStyle = "#d40072";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(40, bottomY - 10);
+          ctx.quadraticCurveTo(150, bottomY + 20, 260, bottomY - 10);
+          ctx.stroke();
+
+          ctx.fillStyle = "#d40072";
+          ctx.font = "bold 26px 'Comic Sans MS'";
+          ctx.textAlign = "center";
+          ctx.fillText("Tasya & Dwi ❤️", canvas.width / 2, bottomY + 35);
+
+          display.innerText = "Selesai!";
+        }
       }
+    }, 1000);
+  }
 
-      startCountdown();
+  startCountdown();
+}
+
+/* Download */
+document.getElementById('download').onclick = function() {
+  const canvas = document.getElementById('canvas');
+  this.href = canvas.toDataURL("image/png");
+  this.download = "photobooth.png";
+};
+
+/* HD Preview Template — versi rapi & kecil */
+function drawPreview(canvasId, frameSrc) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+
+  const frame = new Image();
+  frame.src = frameSrc;
+
+  frame.onload = () => {
+    const photoW = 115;
+    const photoH = 145;
+    const spacing = 15;
+
+    canvas.width = 140;
+    canvas.height = totalPhotos * (photoH + spacing) + 10;
+
+    ctx.fillStyle = "#ffd3e6";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < totalPhotos; i++) {
+      const y = i * (photoH + spacing);
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(12, y + 10, photoW, photoH);
+
+      ctx.drawImage(frame, 12, y + 10, photoW, photoH);
     }
 
-    window.onload = function() {
-      document.getElementById('download').onclick = function() {
-        const canvas = document.getElementById('canvas');
-        const link = canvas.toDataURL("image/png");
-        this.href = link;
-        this.download = "photobooth.png";
-      };
-    };
-  </script>
+    ctx.strokeStyle = "#ff1493";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+  };
+}
+
+function loadAllPreviews() {
+  drawPreview("preview1", "frame1.png");
+  drawPreview("preview2", "frame2.png");
+  drawPreview("preview3", "frame3.png");
+}
+
+loadAllPreviews();
+</script>
 
 </body>
 </html>
